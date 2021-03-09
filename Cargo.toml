@@ -1,0 +1,23 @@
+[package]
+name = "punic"
+version = "0.1.0"
+authors = ["Johnson Cheung <johnson@shred.app>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.2.0", features = ["full"] }
+rusoto_core = "0.46.0"
+rusoto_s3 = "0.46.0"
+yaml-rust = "0.4.5"
+serde = "1.0.123"
+serde_yaml = "0.8.17"
+clap = "2.33.3"
+futures = "0.3.5"
+zip = "0.5"
+walkdir = "2"
+tokio-util = {version = "0.6.3", features = ["full"]}
+async-std = "1.9.0"
+shellexpand = "2.1.0"
+async-trait = "0.1.48"
