@@ -256,7 +256,7 @@ async fn main() {
             let framework_name = format!("{}.xcframework",deps.name);
             let path = Path::new(dest_dir.as_str());
             if( path.exists()){
-                extract_zip(dest_dir.as_str(),framework_name.as_str());
+                utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
             } else {
                 let s3_bucket = pun.cache.s3_bucket.clone();
                 let result = cache::s3::download_from_s3(dest_dir.as_str(),cache_prefix,s3_bucket).await.unwrap_or_else(|e| {
@@ -280,7 +280,7 @@ async fn main() {
             let path = Path::new(dest_dir.as_str());
             if(path.exists()) {
                 println!("framework {} already zipped", frame);
-                upload_to_s3(dest_dir.as_str(),cache_prefix,pun.cache.s3_bucket.clone()).await;
+                cache::s3::upload_to_s3(dest_dir.as_str(),cache_prefix,pun.cache.s3_bucket.clone()).await;
             }else{
                 let file = File::create(&path).unwrap();
                 let walkdir = WalkDir::new(src_dir.to_string());

@@ -3,7 +3,7 @@
 
 use zip::write::{FileOptions, ZipWriter};
 use walkdir::{DirEntry, WalkDir};
-use std::io::{Seek, Write};
+use std::io::{Seek, Write,Read};
 use std::fs::File;
 use std::path::Path;
 use std::fs;
