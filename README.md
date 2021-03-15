@@ -9,8 +9,8 @@ Caching framework for ios xcframeworks dependency
 ---
 Currently punic can be installed as a binary or you can use homebrew I recommend using homebrew to run the installation
 ```bash
-    brew tap summerlabs/homebrew-punic
-    brew install punic
+brew tap summerlabs/homebrew-punic
+brew install punic
 ```
 
 # USAGE
@@ -27,11 +27,11 @@ repositoryMap:
 ```
 to download from cache
 ```bash
-    pun download to download assets 
+pun download to download assets 
 ```
 to upload your s3 cache
 ```bash
-    pun upload to upload assets 
+pun upload to upload assets 
 ```
 
 
