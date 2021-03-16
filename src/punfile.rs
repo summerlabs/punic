@@ -7,6 +7,7 @@ use serde::{Serialize, Deserialize};
 pub mod data {
 
     pub struct CacheSetting {
+        pub prefix: String,
         pub local: String,
         pub s3_bucket: String
     }
