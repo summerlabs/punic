@@ -45,6 +45,8 @@ pub async fn upload(filename: String,prefix:String, bucket:String) -> Result<(),
     let mut tokio_file = tokio::fs::File::from_std(file);
     tokio_file.read_to_end(&mut buffer).await;
     let object_key = format!("{}/{}", prefix, path_str).to_string();
+    let object_key2 = object_key.clone();
+    let bucket2 = bucket.clone();
     println!("Uploading {}/{}...", bucket, object_key);
     s3_client.put_object(PutObjectRequest {
         bucket,
@@ -52,6 +54,7 @@ pub async fn upload(filename: String,prefix:String, bucket:String) -> Result<(),
         body: Some(StreamingBody::from(buffer)),
         ..Default::default()
     }).await;
+    println!("Uploaded {}/{}", bucket2, object_key2);
 
     Ok(())
 }

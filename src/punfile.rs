@@ -20,9 +20,7 @@ pub mod data {
 
     pub struct Repository {
         pub repo_name: String,
-        pub name: String,
-        //pub version: String,
-        pub platforms: Vec<String>
+        pub name: String
     }
 
 }

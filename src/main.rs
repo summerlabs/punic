@@ -65,8 +65,7 @@ fn parse_pun_file() -> punfile::data::PunFile {
                 let map_name = seq.as_mapping().unwrap().get(&serde_yaml::Value::from("name"));
                 let repository = Repository{
                     repo_name: String::from(repo_name),
-                    name: String::from(map_name.unwrap().as_str().unwrap()),
-                    platforms: Vec::new()
+                    name: String::from(map_name.unwrap().as_str().unwrap())
                 };
                 pun_file.frameworks.push(repository);
             }
@@ -84,7 +83,7 @@ fn scan_xcframeworks() -> Vec<String>{
         if path.is_dir() && path.to_str().unwrap().contains("xcframework") {
             let pathStr = path.to_str().unwrap().to_string().split("/").last().unwrap().to_string();
             frameworks.push(pathStr);
-        } 
+        }
     }  
     return frameworks;
 }
@@ -117,6 +116,9 @@ async fn main() {
 
     let output_dir = format!("{}/build/{}",expanded_str,cache_prefix);
     std::fs::create_dir_all(output_dir).unwrap();
+
+    // create Carthage build path if it does not exist
+    std::fs::create_dir_all(CARTHAGE_BUILD).unwrap();
 
     if let Some(ref matches) = matches.subcommand_matches("download") {
         let mut children = vec![];
