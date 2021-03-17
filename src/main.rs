@@ -1,11 +1,10 @@
-
 extern crate tokio;
 extern crate rusoto_core;
 extern crate serde;
 extern crate shellexpand;
 extern crate rusoto_s3;
 extern crate futures;
-use std::env; 
+use std::env;
 use std::io::Read;
 use std::io::BufReader;
 use std::fs::File;
@@ -28,6 +27,8 @@ use std::future::Future;
 use clap::{App,Arg};
 use std;
 use punfile::data::{Repository,CacheSetting,PunFile};
+use std::process::{Command, Stdio};
+
 mod punfile;
 mod cache;
 mod utils;
@@ -38,41 +39,44 @@ const OUTPUT: &str = "Carthage/Output";
 
 
 fn parse_pun_file() -> punfile::data::PunFile {
-    println!("reading file");
     let contents = std::fs::read_to_string("Punfile").expect("something went wrong with reading file");
     let d: serde_yaml::Value = serde_yaml::from_str(contents.as_str()).unwrap();
-    let local = d.get("cache").unwrap().get("local").unwrap().as_str();
-    let s3_bucket = d.get("cache").unwrap().get("s3Bucket").unwrap().as_str();
-    let mut punfile = PunFile {
+    let cache = d.get("cache").unwrap();
+    let prefix = cache.get("prefix").unwrap().as_str().unwrap();
+    let local = cache.get("local").unwrap().as_str().unwrap_or("~/Library/Caches/Punic");
+    let s3_bucket = cache.get("s3Bucket").unwrap().as_str().unwrap();
+    println!("Cache Prefix: {}", prefix);
+    println!("Cache Local Path: {}", local);
+    println!("S3 Bucket: {}", s3_bucket);
+    let mut pun_file = PunFile {
         cache: CacheSetting {
-            local: String::from(local.unwrap()),
-            s3_bucket: String::from(s3_bucket.unwrap())
+            prefix: String::from(prefix),
+            local: String::from(local),
+            s3_bucket: String::from(s3_bucket)
         },
-        frameworks: Vec::new() 
+        frameworks: Vec::new()
     };
-    let repositoryMap = d.get("repositoryMap").unwrap().as_sequence().unwrap();
-    for  repo in repositoryMap {
+    let repository_map = d.get("repositoryMap").unwrap().as_sequence().unwrap();
+    for  repo in repository_map {
         let name = repo.as_mapping().unwrap();
         for (key,value) in name.iter(){
             let repo_name = key.as_str().unwrap();
             for seq in value.as_sequence().unwrap().iter(){
                 let map_name = seq.as_mapping().unwrap().get(&serde_yaml::Value::from("name"));
-                //let vers = seq.as_mapping().unwrap().get(&serde_yaml::Value::from("version"));
                 let repository = Repository{
                     repo_name: String::from(repo_name),
-                    //version: String::from(vers.unwrap().as_str().unwrap()),
                     name: String::from(map_name.unwrap().as_str().unwrap()),
                     platforms: Vec::new()
                 };
-                punfile.frameworks.push(repository);
+                pun_file.frameworks.push(repository);
             }
         }
-    } 
-    return punfile;
+    }
+    return pun_file;
 }
 
 fn scan_xcframeworks() -> Vec<String>{
-    println!("scan frameworks");
+    println!("Scanning frameworks in Carthage build folder...");
     let mut frameworks = vec![];
     for entry in fs::read_dir(CARTHAGE_BUILD).unwrap(){
         let en = entry.unwrap();
@@ -103,55 +107,61 @@ async fn main() {
         .subcommand(App::new("download").about("scan your punfile and download dependencies"))
         .subcommand(App::new("upload").about("upload to s3"))
        .get_matches();
-    let pun = parse_pun_file();
-    let cache_prefix = matches.value_of("CachePrefix").unwrap_or("output").to_string();
 
-    let expanded_str = shellexpand::tilde(pun.cache.local.as_str());
+    let pun = parse_pun_file();
+    let local_cache = pun.cache.local.clone();
+    let cache_prefix = matches.value_of("CachePrefix")
+        .unwrap_or(pun.cache.prefix.as_str()).to_string();
+
+    let expanded_str = shellexpand::tilde(local_cache.as_str());
+
     let output_dir = format!("{}/build/{}",expanded_str,cache_prefix);
     std::fs::create_dir_all(output_dir).unwrap();
-    
-    println!("{}/build/{}", pun.cache.local, cache_prefix);
+
     if let Some(ref matches) = matches.subcommand_matches("download") {
+        let mut children = vec![];
         for deps in pun.frameworks {
-            println!("{}/{}.xcframework.zip",CARTHAGE_BUILD,deps.name);
-            let src_dir = format!("{}/{}",CARTHAGE_BUILD,deps.name);
-            let dest_dir = format!("{}/build/{}/{}.xcframework.zip",expanded_str,cache_prefix,deps.name);
             let framework_name = format!("{}.xcframework",deps.name);
+            let dest_dir = format!("{}/build/{}/{}.xcframework.zip",expanded_str,cache_prefix,deps.name).to_string();
+            let src_dir = format!("{}/{}",CARTHAGE_BUILD,deps.name);
             let path = Path::new(dest_dir.as_str());
-            if( path.exists()){
+            let prefix = cache_prefix.clone();
+            if path.exists() {
                 utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
             } else {
                 let s3_bucket = pun.cache.s3_bucket.clone();
-                let result = cache::s3::download_from_s3(dest_dir.as_str(),cache_prefix.as_str(),s3_bucket).await.unwrap_or_else(|e| {
-
+                let task = tokio::spawn( async move {
+                    cache::s3::download_from_s3(dest_dir.to_string(), prefix.to_string(), s3_bucket).await;
+                    let path = Path::new(dest_dir.as_str());
+                    if path.exists() {
+                        utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
+                    }
                 });
-                let path = Path::new(dest_dir.as_str());
-                if(path.exists()) {
-                    utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
-                }
+                children.push(task);
             }
         }
+        join_all(children).await;
     }
     if let Some(ref matches) = matches.subcommand_matches("upload") {
         let frameworks = scan_xcframeworks();
         let mut children = vec![];
         for frame in frameworks {
+            println!("Found {}/{}",CARTHAGE_BUILD,frame);
             let src_dir = format!("{}/{}",CARTHAGE_BUILD,frame);
             let dest_dir =  {
                 format!("{}/build/{}/{}.zip",expanded_str,cache_prefix,frame)
             };
             let bucket_name = pun.cache.s3_bucket.clone();
             let prefix = cache_prefix.clone();
-            if(Path::new(&dest_dir).exists()) {
-                println!("framework {} already zipped", frame);
+            if Path::new(&dest_dir).exists() {
+                println!("Already zipped {}", frame);
                 let dest = dest_dir;
                 let pref = prefix.to_string();
-
                 let task = tokio::spawn(async move {
                     cache::s3::upload(dest, pref, bucket_name).await;
                 });
                 children.push(task);
-            }else{
+            } else {
                 let dest = dest_dir.clone();
                 let task = tokio::spawn( async move {
                     let file = File::create(dest).unwrap();

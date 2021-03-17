@@ -12,45 +12,46 @@ use tokio_util::codec;
 use rusoto_core::signature::SignedRequestPayload::Stream;
 use std::ptr::null;
 
-pub async fn download_from_s3(filename: &str,prefix: &str, bucket: String) -> Result<(),Box<dyn std::error::Error>>{
-    println!("downloading {}{}", prefix, filename);
+pub async fn download_from_s3(filename: String,prefix: String, bucket: String) -> Result<(),Box<dyn std::error::Error>>{
     let s3_client = S3Client::new(Region::UsWest1);
-    let pathStr = filename.to_string().split("/").last().unwrap().to_string();
-    let key = format!("{}/{}",prefix,pathStr).to_string();
-    println!("{}, {}",bucket, key);
-    let get_req = GetObjectRequest {
-        bucket: bucket,
-        key: key,
+
+    let f_name = { filename.clone() };
+    // println!("{}", f_name);
+    let path_str = f_name.split("/").last().unwrap_or("");
+    // println!("{}", path_str);
+
+    let object_key = format!("punic/{}/{}",prefix,path_str).to_string();
+    println!("Downloading {}/{}...", bucket, object_key);
+
+    let request = GetObjectRequest {
+        bucket,
+        key: object_key,
         ..Default::default()
     };
 
-    let mut result = s3_client.get_object(get_req).await;
+    let stream = s3_client.get_object(request).await;
 
-    let stream = result?.body.take().expect("no body");
-    println!("Downloaded {}", pathStr.clone());
+    let stream = stream?.body.take().expect("no body");
     let mut body = stream.into_async_read();
     let mut file = tokio::fs::File::create(filename).await.unwrap();
     tokio::io::copy(&mut body,&mut file).await;
-    
-    return Result::Ok(())
+
+    Ok(())
 }
 
 pub async fn upload(filename: String,prefix:String, bucket:String) -> Result<(),Box<dyn std::error::Error>>{
     let s3_client = S3Client::new(Region::UsWest1);
     let mut buffer = Vec::new();
-    let fname = {
-        filename.clone()
-    };
-    let pathStr = fname.split("/").last().unwrap().to_string();
-    let file = File::open(fname).unwrap();
+    let f_name = { filename.clone() };
+    let path_str = f_name.split("/").last().unwrap().to_string();
+    let file = File::open(f_name).unwrap();
     let mut tokio_file = tokio::fs::File::from_std(file);
     tokio_file.read_to_end(&mut buffer).await;
-    //.unwrap_or_else(|e| panic!("unable to read byte stream"));
-    // let byte_stream = codec::FramedRead::new(tokio_file, codec::BytesCodec::new()).map(|r| r.unwrap().freeze());
-    println!("Uploading {}...", pathStr);
+    let object_key = format!("punic/{}/{}", prefix, path_str).to_string();
+    println!("Uploading {}/{}...", bucket, object_key);
     s3_client.put_object(PutObjectRequest {
-        bucket: bucket,
-        key: format!("{}/{}",prefix,pathStr).to_string(),
+        bucket,
+        key: object_key,
         body: Some(StreamingBody::from(buffer)),
         ..Default::default()
     }).await;
