@@ -103,6 +103,13 @@ async fn main() {
         .help("set custom prefix for directory")
         .takes_value(true)
         )
+        .arg(Arg::with_name("ForceCommand")
+            .short("f")
+            .long("force")
+            .value_name("Force Command")
+            .help("force the command ignoring cache")
+            .takes_value(true)
+        )
         .subcommand(App::new("download").about("scan your punfile and download dependencies"))
         .subcommand(App::new("upload").about("upload to s3"))
        .get_matches();
@@ -111,6 +118,8 @@ async fn main() {
     let local_cache = pun.cache.local.clone();
     let cache_prefix = matches.value_of("CachePrefix")
         .unwrap_or(pun.cache.prefix.as_str()).to_string();
+    let forceCommand = matches.value_of("ForceCommand")
+        .unwrap_or("false");
 
     let expanded_str = shellexpand::tilde(local_cache.as_str());
 
@@ -129,7 +138,6 @@ async fn main() {
             let path = Path::new(dest_dir.as_str());
             let prefix = cache_prefix.clone();
             if path.exists() {
-                println!("Unzipping directory");
                 let task = tokio::spawn(async move {
                     utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
                 });
@@ -160,7 +168,7 @@ async fn main() {
             };
             let bucket_name = pun.cache.s3_bucket.clone();
             let prefix = cache_prefix.clone();
-            if Path::new(&dest_dir).exists() {
+            if Path::new(&dest_dir).exists() && forceCommand != "true" {
                 println!("Already zipped {}", frame);
                 let dest = dest_dir;
                 let pref = prefix.to_string();
