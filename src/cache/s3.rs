@@ -16,11 +16,8 @@ pub async fn download_from_s3(filename: String,prefix: String, bucket: String) -
     let s3_client = S3Client::new(Region::UsWest1);
 
     let f_name = { filename.clone() };
-    // println!("{}", f_name);
     let path_str = f_name.split("/").last().unwrap_or("");
-    // println!("{}", path_str);
-
-    let object_key = format!("punic/{}/{}",prefix,path_str).to_string();
+    let object_key = format!("{}/{}",prefix,path_str).to_string();
     println!("Downloading {}/{}...", bucket, object_key);
 
     let request = GetObjectRequest {

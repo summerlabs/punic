@@ -127,10 +127,15 @@ async fn main() {
             let path = Path::new(dest_dir.as_str());
             let prefix = cache_prefix.clone();
             if path.exists() {
-                utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
+                println!("Unzipping directory");
+                let task = tokio::spawn(async move {
+                    utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
+                });
+                children.push(task);
             } else {
                 let s3_bucket = pun.cache.s3_bucket.clone();
                 let task = tokio::spawn( async move {
+                    println!("attempting to download {}",dest_dir.to_string());
                     cache::s3::download_from_s3(dest_dir.to_string(), prefix.to_string(), s3_bucket).await;
                     let path = Path::new(dest_dir.as_str());
                     if path.exists() {
