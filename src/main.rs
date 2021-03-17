@@ -118,7 +118,7 @@ async fn main() {
     let local_cache = pun.cache.local.clone();
     let cache_prefix = matches.value_of("CachePrefix")
         .unwrap_or(pun.cache.prefix.as_str()).to_string();
-    let forceCommand = matches.value_of("ForceCommand")
+    let force_command = matches.value_of("ForceCommand")
         .unwrap_or("false");
 
     let expanded_str = shellexpand::tilde(local_cache.as_str());
@@ -138,14 +138,19 @@ async fn main() {
             let path = Path::new(dest_dir.as_str());
             let prefix = cache_prefix.clone();
             if path.exists() {
-                let task = tokio::spawn(async move {
-                    utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
-                });
-                children.push(task);
+                let dep_path_format = format!("{}/{}.xcframework", CARTHAGE_BUILD, deps.name);
+                let dep_path = Path::new(dep_path_format.as_str());
+                if !dep_path.exists() {
+                    let task = tokio::spawn(async move {
+                        utils::archive::extract_zip(CARTHAGE_BUILD,dest_dir.as_str(),framework_name.as_str());
+                    });
+                    children.push(task);
+                } else {
+                    println!("Already downloaded {}", path.display());
+                }
             } else {
                 let s3_bucket = pun.cache.s3_bucket.clone();
                 let task = tokio::spawn( async move {
-                    println!("attempting to download {}",dest_dir.to_string());
                     cache::s3::download_from_s3(dest_dir.to_string(), prefix.to_string(), s3_bucket).await;
                     let path = Path::new(dest_dir.as_str());
                     if path.exists() {
@@ -168,7 +173,7 @@ async fn main() {
             };
             let bucket_name = pun.cache.s3_bucket.clone();
             let prefix = cache_prefix.clone();
-            if Path::new(&dest_dir).exists() && forceCommand != "true" {
+            if Path::new(&dest_dir).exists() && force_command != "true" {
                 println!("Already zipped {}", frame);
                 let dest = dest_dir;
                 let pref = prefix.to_string();
