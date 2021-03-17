@@ -44,7 +44,7 @@ pub async fn upload(filename: String,prefix:String, bucket:String) -> Result<(),
     let file = File::open(f_name).unwrap();
     let mut tokio_file = tokio::fs::File::from_std(file);
     tokio_file.read_to_end(&mut buffer).await;
-    let object_key = format!("punic/{}/{}", prefix, path_str).to_string();
+    let object_key = format!("{}/{}", prefix, path_str).to_string();
     println!("Uploading {}/{}...", bucket, object_key);
     s3_client.put_object(PutObjectRequest {
         bucket,
