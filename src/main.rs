@@ -117,6 +117,13 @@ async fn main() {
         )
         .subcommand(App::new("download")
             .about("scan your punfile and download dependencies")
+            .arg(Arg::with_name("ForceCommand")
+                .short("f")
+                .long("force")
+                .value_name("Force Command")
+                .help("force the command ignoring cache")
+                .takes_value(true)
+            )
             .arg(Arg::with_name("dependencies")
                 .short("d")
                 .long("deps")
@@ -128,6 +135,13 @@ async fn main() {
         )
         .subcommand(App::new("upload")
             .about("upload to s3")
+            .arg(Arg::with_name("ForceCommand")
+                .short("f")
+                .long("force")
+                .value_name("Force Command")
+                .help("force the command ignoring cache")
+                .takes_value(true)
+            )
             .arg(Arg::with_name("dependencies")
                 .short("d")
                 .long("deps")
@@ -157,6 +171,7 @@ async fn main() {
     if let Some(ref matches) = matches.subcommand_matches("download") {
         let mut children = vec![];
         let requested_frameworks:Vec<Repository> = matches.values_of("dependencies").unwrap_or(Values::default()).map(|iter| Repository{ repo_name:String::from(iter), name:String::from(iter)}).collect();
+        let force_command = matches.value_of("ForceCommand").unwrap_or("false");
         let mut frameworks = pun.frameworks;
         if(!requested_frameworks.is_empty()) {
             let mut filtered_frameworks:Vec<Repository> = Vec::new();
@@ -175,15 +190,13 @@ async fn main() {
             frameworks = filtered_frameworks;
         }
 
-
-
         for deps in frameworks {
             let framework_name = format!("{}.xcframework",deps.name);
             let dest_dir = format!("{}/build/{}/{}.xcframework.zip",expanded_str,cache_prefix,deps.name).to_string();
             let src_dir = format!("{}/{}",CARTHAGE_BUILD,deps.name);
             let path = Path::new(dest_dir.as_str());
             let prefix = cache_prefix.clone();
-            if path.exists() {
+            if (path.exists() && !force_command.eq("true")){
                 let dep_path_format = format!("{}/{}.xcframework", CARTHAGE_BUILD, deps.name);
                 let dep_path = Path::new(dep_path_format.as_str());
                 if !dep_path.exists() {
@@ -211,6 +224,7 @@ async fn main() {
     if let Some(ref matches) = matches.subcommand_matches("upload") {
         let mut children = vec![];
         let requested_frameworks:Vec<&str> = matches.values_of("dependencies").unwrap_or(Values::default()).collect();
+        let force_command = matches.value_of("ForceCommand").unwrap_or("false");
         let mut frameworks = scan_xcframeworks();
         if(!requested_frameworks.is_empty()) {
             let mut filtered_frameworks:Vec<String> = Vec::new();
@@ -233,7 +247,7 @@ async fn main() {
             };
             let bucket_name = pun.cache.s3_bucket.clone();
             let prefix = cache_prefix.clone();
-            if Path::new(&dest_dir).exists() && force_command != "true" {
+            if Path::new(&dest_dir).exists() && !force_command.eq("true") {
                 println!("Already zipped {}", frame);
                 let dest = dest_dir;
                 let pref = prefix.to_string();
