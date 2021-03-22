@@ -24,11 +24,13 @@ use futures::FutureExt;
 use futures::future::join_all;
 use std::io::{Seek, Write};
 use std::future::Future;
-use clap::{App,Arg};
+use clap::{App, Arg, Values};
 use std;
 use punfile::data::{Repository,CacheSetting,PunFile};
 use std::process::{Command, Stdio};
 use serde_yaml::Value;
+use std::ops::Deref;
+
 mod punfile;
 mod cache;
 mod utils;
@@ -85,6 +87,7 @@ fn scan_xcframeworks() -> Vec<String>{
         let path = en.path();
         if path.is_dir() && path.to_str().unwrap().contains("xcframework") {
             let pathStr = path.to_str().unwrap().to_string().split("/").last().unwrap().to_string();
+            println!("{}",pathStr);
             frameworks.push(pathStr);
         }
     }  
@@ -92,12 +95,11 @@ fn scan_xcframeworks() -> Vec<String>{
 }
 
 
-
 #[tokio::main]
 async fn main() {
     let matches = App::new("Punic Carthage")
-       .version("1.0")
-       .about("ios dependency caching made great again")
+        .version("1.0")
+        .about("ios dependency caching made great again")
        .author("Johnson Cheung")
        .arg(Arg::with_name("CachePrefix")
         .short("p")
@@ -113,8 +115,28 @@ async fn main() {
             .help("force the command ignoring cache")
             .takes_value(true)
         )
-        .subcommand(App::new("download").about("scan your punfile and download dependencies"))
-        .subcommand(App::new("upload").about("upload to s3"))
+        .subcommand(App::new("download")
+            .about("scan your punfile and download dependencies")
+            .arg(Arg::with_name("dependencies")
+                .short("d")
+                .long("deps")
+                .multiple(true)
+                .allow_hyphen_values(true)
+                .value_delimiter(" ")
+                .value_terminator(";")
+            )
+        )
+        .subcommand(App::new("upload")
+            .about("upload to s3")
+            .arg(Arg::with_name("dependencies")
+                .short("d")
+                .long("deps")
+                .multiple(true)
+                .allow_hyphen_values(true)
+                .value_delimiter(";")
+            )
+
+        )
        .get_matches();
 
     let pun = parse_pun_file();
@@ -132,10 +154,30 @@ async fn main() {
 
     // create Carthage build path if it does not exist
     std::fs::create_dir_all(CARTHAGE_BUILD).unwrap();
-
     if let Some(ref matches) = matches.subcommand_matches("download") {
         let mut children = vec![];
-        for deps in pun.frameworks {
+        let requested_frameworks:Vec<Repository> = matches.values_of("dependencies").unwrap_or(Values::default()).map(|iter| Repository{ repo_name:String::from(iter), name:String::from(iter)}).collect();
+        let mut frameworks = pun.frameworks;
+        if(!requested_frameworks.is_empty()) {
+            let mut filtered_frameworks:Vec<Repository> = Vec::new();
+            for dep in &requested_frameworks {
+                let temp = frameworks.iter().find(|item| item.repo_name.eq(&dep.repo_name));
+                if(temp.is_none()){
+                    println!("{} is not a dependency", dep.repo_name);
+                }else{
+                    let frame = temp.unwrap();
+                    filtered_frameworks.push(Repository {
+                        repo_name: frame.repo_name.to_string(),
+                        name: frame.name.to_string()
+                    });
+                }
+            }
+            frameworks = filtered_frameworks;
+        }
+
+
+
+        for deps in frameworks {
             let framework_name = format!("{}.xcframework",deps.name);
             let dest_dir = format!("{}/build/{}/{}.xcframework.zip",expanded_str,cache_prefix,deps.name).to_string();
             let src_dir = format!("{}/{}",CARTHAGE_BUILD,deps.name);
@@ -167,8 +209,22 @@ async fn main() {
         join_all(children).await;
     }
     if let Some(ref matches) = matches.subcommand_matches("upload") {
-        let frameworks = scan_xcframeworks();
         let mut children = vec![];
+        let requested_frameworks:Vec<&str> = matches.values_of("dependencies").unwrap_or(Values::default()).collect();
+        let mut frameworks = scan_xcframeworks();
+        if(!requested_frameworks.is_empty()) {
+            let mut filtered_frameworks:Vec<String> = Vec::new();
+            for dep in &requested_frameworks {
+                let temp = frameworks.iter().find(|item| item.contains(dep));
+                if(temp.is_none()){
+                    println!("{} is not a dependency", dep);
+                }else{
+                    let frame = temp.unwrap();
+                    filtered_frameworks.push(frame.to_string());
+                }
+            }
+            frameworks = filtered_frameworks;
+        }
         for frame in frameworks {
             println!("Found {}/{}",CARTHAGE_BUILD,frame);
             let src_dir = format!("{}/{}",CARTHAGE_BUILD,frame);
