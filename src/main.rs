@@ -28,7 +28,7 @@ use clap::{App,Arg};
 use std;
 use punfile::data::{Repository,CacheSetting,PunFile};
 use std::process::{Command, Stdio};
-
+use serde_yaml::Value;
 mod punfile;
 mod cache;
 mod utils;
@@ -42,7 +42,10 @@ fn parse_pun_file() -> punfile::data::PunFile {
     let contents = std::fs::read_to_string("Punfile").expect("something went wrong with reading file");
     let d: serde_yaml::Value = serde_yaml::from_str(contents.as_str()).unwrap();
     let cache = d.get("cache").unwrap();
-    let prefix = cache.get("prefix").unwrap().as_str().unwrap();
+
+    let defaultPrefix = &Value::String("output".into());
+
+    let prefix = cache.get("prefix").unwrap_or(defaultPrefix).as_str().unwrap_or("output");
     let local = cache.get("local").unwrap().as_str().unwrap_or("~/Library/Caches/Punic");
     let s3_bucket = cache.get("s3Bucket").unwrap().as_str().unwrap();
     println!("Cache Prefix: {}", prefix);
@@ -118,6 +121,7 @@ async fn main() {
     let local_cache = pun.cache.local.clone();
     let cache_prefix = matches.value_of("CachePrefix")
         .unwrap_or(pun.cache.prefix.as_str()).to_string();
+    println!("cache prefix {}", cache_prefix.clone());
     let force_command = matches.value_of("ForceCommand")
         .unwrap_or("false");
 
