@@ -98,7 +98,7 @@ fn scan_xcframeworks() -> Vec<String>{
 #[tokio::main]
 async fn main() {
     let matches = App::new("Punic Carthage")
-        .version("1.0")
+        .version("0.0.7")
         .about("ios dependency caching made great again")
        .author("Johnson Cheung")
        .arg(Arg::with_name("CachePrefix")
