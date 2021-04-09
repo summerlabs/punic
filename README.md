@@ -9,7 +9,6 @@ that exclusively supports Apple's `.xcframeworks`.
 - Easy remote caching via [AWS S3](https://aws.amazon.com/s3/)
 - Easy CI/CD integration
 - Support for versioned dependencies
-- Optional support for _Carthage-less_ remote caching
 
 # Installation
 
