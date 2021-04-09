@@ -1,5 +1,6 @@
-# PUNIC
+# Punic
 
+![elephant](assets/elephant_2.png) 
 
 # GETTING STARTED
 ---
