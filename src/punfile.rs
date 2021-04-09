@@ -6,14 +6,14 @@ use serde::{Serialize, Deserialize};
 
 pub mod data {
 
-    pub struct CacheSetting {
+    pub struct Configuration {
         pub prefix: String,
         pub local: String,
         pub s3_bucket: String
     }
 
     pub struct PunFile {
-        pub cache: CacheSetting,
+        pub configuration: Configuration,
         pub frameworks: Vec<Repository>
     }
 

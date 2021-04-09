@@ -26,7 +26,7 @@ use std::io::{Seek, Write};
 use std::future::Future;
 use clap::{App, Arg, Values};
 use std;
-use punfile::data::{Repository,CacheSetting,PunFile};
+use punfile::data::{Repository, Configuration, PunFile};
 use std::process::{Command, Stdio};
 use serde_yaml::Value;
 use std::ops::Deref;
@@ -43,7 +43,7 @@ const OUTPUT: &str = "Carthage/Output";
 fn parse_pun_file() -> punfile::data::PunFile {
     let contents = std::fs::read_to_string("Punfile").expect("something went wrong with reading file");
     let d: serde_yaml::Value = serde_yaml::from_str(contents.as_str()).unwrap();
-    let cache = d.get("cache").unwrap();
+    let cache = d.get("configuration").unwrap();
 
     let defaultPrefix = &Value::String("output".into());
 
@@ -54,14 +54,14 @@ fn parse_pun_file() -> punfile::data::PunFile {
     println!("Cache Local Path: {}", local);
     println!("S3 Bucket: {}", s3_bucket);
     let mut pun_file = PunFile {
-        cache: CacheSetting {
+        configuration: Configuration {
             prefix: String::from(prefix),
             local: String::from(local),
             s3_bucket: String::from(s3_bucket)
         },
         frameworks: Vec::new()
     };
-    let repository_map = d.get("repositoryMap").unwrap().as_sequence().unwrap();
+    let repository_map = d.get("dependencies").unwrap().as_sequence().unwrap();
     for  repo in repository_map {
         let name = repo.as_mapping().unwrap();
         for (key,value) in name.iter(){
@@ -154,9 +154,9 @@ async fn main() {
        .get_matches();
 
     let pun = parse_pun_file();
-    let local_cache = pun.cache.local.clone();
+    let local_cache = pun.configuration.local.clone();
     let cache_prefix = matches.value_of("CachePrefix")
-        .unwrap_or(pun.cache.prefix.as_str()).to_string();
+        .unwrap_or(pun.configuration.prefix.as_str()).to_string();
     println!("cache prefix {}", cache_prefix.clone());
     let force_command = matches.value_of("ForceCommand")
         .unwrap_or("false");
@@ -208,7 +208,7 @@ async fn main() {
                     println!("Already downloaded {}", path.display());
                 }
             } else {
-                let s3_bucket = pun.cache.s3_bucket.clone();
+                let s3_bucket = pun.configuration.s3_bucket.clone();
                 let task = tokio::spawn( async move {
                     cache::s3::download_from_s3(dest_dir.to_string(), prefix.to_string(), s3_bucket).await;
                     let path = Path::new(dest_dir.as_str());
@@ -245,7 +245,7 @@ async fn main() {
             let dest_dir =  {
                 format!("{}/build/{}/{}.zip",expanded_str,cache_prefix,frame)
             };
-            let bucket_name = pun.cache.s3_bucket.clone();
+            let bucket_name = pun.configuration.s3_bucket.clone();
             let prefix = cache_prefix.clone();
             if Path::new(&dest_dir).exists() && !force_command.eq("true") {
                 println!("Already zipped {}", frame);

@@ -3,6 +3,6 @@ cache:
   #prefix: swiftlang-1200.0.45-clang-1200.0.32.28
   local: ~/Library/Caches/Punic
   s3Bucket: shred-ios-carthage-cache
-repositoryMap:
+dependencies:
 - Alamofire:
   - name: Alamofire
