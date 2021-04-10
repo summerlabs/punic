@@ -10,7 +10,7 @@ that exclusively supports Apple's `.xcframeworks`.
 - Easy CI/CD integration
 - Support for versioned dependencies
 
-Please send us a `star` if you find this CLI useful!
+Please give us a `star` if you find this CLI useful!
 
 
 # Installation
