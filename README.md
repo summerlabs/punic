@@ -6,8 +6,11 @@
 that exclusively supports Apple's `.xcframeworks`.
 
 **Features**
+
 ✅ Easy remote caching via [AWS S3](https://aws.amazon.com/s3/)
+
 ✅ Easy CI/CD integration
+
 ✅ Support for versioned dependencies
 
 Please give us a `star` if you find this CLI useful!
