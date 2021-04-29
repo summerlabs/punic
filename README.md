@@ -95,7 +95,7 @@ punic download
 punic upload
 ```
 
-**Other miscellaneous commands**
+**Miscellaneous**
 ```bash
 # force an upload/download and ignore the local cache
 punic {command} -f true 
