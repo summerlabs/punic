@@ -95,6 +95,15 @@ punic download
 punic upload
 ```
 
+**Other miscellaneous commands**
+```bash
+# force an upload/download and ignore the local cache
+punic {command} -f true 
+
+# use an override cache prefix
+punic --cache-prefix some_other_path {command} 
+```
+
 ## Carthage-less Support
 
 **Punic** was built with `Carthage` in mind as it essentially builds frameworks
