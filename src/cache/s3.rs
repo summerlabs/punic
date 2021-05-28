@@ -13,7 +13,7 @@ use rusoto_core::signature::SignedRequestPayload::Stream;
 use std::ptr::null;
 
 pub async fn download_from_s3(filename: String,prefix: String, bucket: String) -> Result<(),Box<dyn std::error::Error>>{
-    let s3_client = S3Client::new(Region::UsWest1);
+    let s3_client = S3Client::new(Region::default());
 
     let f_name = { filename.clone() };
     let path_str = f_name.split("/").last().unwrap_or("");
@@ -37,7 +37,7 @@ pub async fn download_from_s3(filename: String,prefix: String, bucket: String) -
 }
 
 pub async fn upload(filename: String,prefix:String, bucket:String) -> Result<(),Box<dyn std::error::Error>>{
-    let s3_client = S3Client::new(Region::UsWest1);
+    let s3_client = S3Client::new(Region::default());
     let mut buffer = Vec::new();
     let f_name = { filename.clone() };
     let path_str = f_name.split("/").last().unwrap().to_string();
