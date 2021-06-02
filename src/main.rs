@@ -14,8 +14,6 @@ mod cache;
 mod punfile;
 mod utils;
 
-const CARTHAGE_BUILD: &str = "Carthage/Build";
-
 #[tokio::main]
 async fn main() {
     let matches = App::new("Punic Carthage")
@@ -83,7 +81,6 @@ async fn main() {
 
     let punfile = parse_pun_file(matches.clone());
     let local_cache = punfile.configuration.local.clone();
-    println!("cache prefix {}", punfile.configuration.prefix.clone());
 
     let expanded_str = shellexpand::tilde(local_cache.as_str());
 
@@ -91,7 +88,7 @@ async fn main() {
     std::fs::create_dir_all(output_dir).unwrap();
 
     // create Carthage build path if it does not exist
-    std::fs::create_dir_all(CARTHAGE_BUILD).unwrap();
+    std::fs::create_dir_all(punfile.configuration.output.clone()).unwrap();
 
     if let Some(ref matches) = matches.subcommand_matches("download") {
         download_dependencies(punfile, matches, expanded_str).await;

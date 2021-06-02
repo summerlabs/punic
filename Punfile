@@ -1,6 +1,7 @@
 configuration:
   prefix: test
   local: ~/Library/Caches/Punic
+  output: Carthage/Build
   s3Bucket: shred-ios-carthage-cache
 dependencies:
 - Alamofire:

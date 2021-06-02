@@ -8,6 +8,7 @@ pub mod data {
     pub struct Configuration {
         pub prefix: String,
         pub local: String,
+        pub output: String,
         pub s3_bucket: String,
     }
 
@@ -26,44 +27,48 @@ pub fn parse_pun_file(matches: ArgMatches) -> punfile::data::PunFile {
     let contents = std::fs::read_to_string("Punfile")
         .expect("Unable to read Punfile, make sure one exists in your project.");
     let contents_yaml: serde_yaml::Value = serde_yaml::from_str(contents.as_str()).unwrap();
-    let cache = contents_yaml
+    let configuration = contents_yaml
         .get("configuration")
         .expect("Unable to read key `configuration` in Punfile.");
     let default_prefix = &Value::String("output".into());
-    let prefix = cache
+    let _prefix = configuration
         .get("prefix")
         .unwrap_or(default_prefix)
         .as_str()
         .unwrap_or("output");
-    let local = cache
+    let prefix = matches
+        .value_of("CachePrefix")
+        .unwrap_or(_prefix)
+        .to_string();
+    let local = configuration
         .get("local")
-        .unwrap()
+        .expect("Unable to read key `local` in Punfile.")
         .as_str()
         .unwrap_or("~/Library/Caches/Punic");
-
-    let s3_bucket = cache
+    let output = configuration
+        .get("output")
+        .expect("Unable to read key `output` in Punfile.")
+        .as_str()
+        .unwrap_or("Carthage/Build");
+    let s3_bucket = configuration
         .get("s3Bucket")
         .expect("Unable to read key `s3Bucket` in Punfile.")
         .as_str()
         .unwrap();
 
-    let cache_prefix = matches
-        .value_of("CachePrefix")
-        .unwrap_or(String::from(prefix).as_str())
-        .to_string();
-
     let mut punfile = PunFile {
         configuration: Configuration {
-            prefix: cache_prefix,
+            prefix,
             local: String::from(local),
+            output: String::from(output),
             s3_bucket: String::from(s3_bucket),
         },
         frameworks: Vec::new(),
     };
 
-    println!("Cache Prefix: {}", punfile.configuration.prefix);
-    println!("Cache Local Path: {}", punfile.configuration.local);
-    println!("S3 Bucket: {}", punfile.configuration.s3_bucket);
+    println!("Cache Prefix\t\t: {}", punfile.configuration.prefix);
+    println!("Cache Local Path\t: {}", punfile.configuration.local);
+    println!("S3 Bucket\t\t: {}", punfile.configuration.s3_bucket);
 
     let repository_map = contents_yaml
         .get("dependencies")

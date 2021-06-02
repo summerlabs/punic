@@ -11,7 +11,6 @@ pub async fn download_dependencies<'a>(
     expanded_str: Cow<'a, str>,
 ) {
     let force_command = matches.value_of("ForceCommand").unwrap_or("false");
-    let cache_prefix = punfile.configuration.prefix;
     let mut children = vec![];
     let requested_frameworks: Vec<Repository> = matches
         .values_of("dependencies")
@@ -42,6 +41,8 @@ pub async fn download_dependencies<'a>(
     }
 
     for dependencies in frameworks {
+        let output = punfile.configuration.output.clone();
+        let cache_prefix = punfile.configuration.prefix.clone();
         let framework_name = format!("{}.xcframework", dependencies.name);
         let dest_dir = format!(
             "{}/build/{}/{}.xcframework.zip",
@@ -51,17 +52,13 @@ pub async fn download_dependencies<'a>(
         let path = Path::new(dest_dir.as_str());
         let prefix = cache_prefix.clone();
         if path.exists() && !force_command.eq("true") {
-            let dep_path_format = format!(
-                "{}/{}.xcframework",
-                crate::CARTHAGE_BUILD,
-                dependencies.name
-            );
+            let dep_path_format = format!("{}/{}.xcframework", output, dependencies.name);
             let dep_path = Path::new(dep_path_format.as_str());
             println!("{}", dep_path_format);
             if !dep_path.exists() {
                 let task = tokio::spawn(async move {
                     utils::archive::extract_zip(
-                        crate::CARTHAGE_BUILD,
+                        &output,
                         dest_dir.as_str(),
                         framework_name.as_str(),
                     );
@@ -79,7 +76,7 @@ pub async fn download_dependencies<'a>(
                 let path = Path::new(dest_dir.as_str());
                 if path.exists() {
                     utils::archive::extract_zip(
-                        crate::CARTHAGE_BUILD,
+                        &output,
                         dest_dir.as_str(),
                         framework_name.as_str(),
                     );

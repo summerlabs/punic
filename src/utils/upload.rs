@@ -14,13 +14,12 @@ pub async fn upload_dependencies<'a>(
     expanded_str: Cow<'a, str>,
 ) {
     let force_command = matches.value_of("ForceCommand").unwrap_or("false");
-    let cache_prefix = punfile.configuration.prefix;
     let mut children = vec![];
     let requested_frameworks: Vec<&str> = matches
         .values_of("dependencies")
         .unwrap_or(Values::default())
         .collect();
-    let mut frameworks = scan_xcframeworks();
+    let mut frameworks = scan_xcframeworks(punfile.configuration.output.clone());
     if !requested_frameworks.is_empty() {
         let mut filtered_frameworks: Vec<String> = Vec::new();
         for dep in &requested_frameworks {
@@ -35,10 +34,12 @@ pub async fn upload_dependencies<'a>(
         frameworks = filtered_frameworks;
     }
     for frame in frameworks {
-        println!("Found {}/{}", crate::CARTHAGE_BUILD, frame);
-        let src_dir = format!("{}/{}", crate::CARTHAGE_BUILD, frame);
-        let dest_dir = { format!("{}/build/{}/{}.zip", expanded_str, cache_prefix, frame) };
+        let output = punfile.configuration.output.clone();
+        let cache_prefix = punfile.configuration.prefix.clone();
         let bucket_name = punfile.configuration.s3_bucket.clone();
+        println!("Found {}/{}", &output, frame);
+        let src_dir = format!("{}/{}", output, frame);
+        let dest_dir = { format!("{}/build/{}/{}.zip", expanded_str, cache_prefix, frame) };
         let prefix = cache_prefix.clone();
         if Path::new(&dest_dir).exists() && !force_command.eq("true") {
             println!("Already zipped {}", frame);
