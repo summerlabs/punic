@@ -1,8 +1,8 @@
 
 
 
-use zip::write::{FileOptions, ZipWriter};
-use walkdir::{DirEntry, WalkDir};
+use zip::write::{FileOptions};
+use walkdir::{DirEntry};
 use std::io::{Seek, Write,Read};
 use std::fs::File;
 use std::path::Path;
