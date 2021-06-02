@@ -57,16 +57,18 @@ as well as configuring the path of your local cache.
 ```yaml
 # Configure Punic
 configuration:
-  # save dependencies into this directory
+  # save dependencies into this AWS bucket directory
   # ie. //some-remote-bucket/1.0.1/Alamofire/Alamofire.xcframework
   # 
   prefix: 1.0.1
   # local cache location
   local: ~/Library/Caches/Punic
+  # output location
+  output: Carthage/Build
   # aws bucket location
   s3Bucket: some-remote-bucket
   
-# Search your Carthage/Build directory for these .xcframeworks
+# Search your output directory for these .xcframeworks
 dependencies:
 # single framework definition
 - AlamoFire:
@@ -106,12 +108,10 @@ punic --cache-prefix some_other_path {command}
 
 ## Carthage-less Support
 
-**Punic** was built with `Carthage` in mind as it essentially builds frameworks
-for consumption. However, **Punic** by itself is simply a remote caching tool that simply 
-uploads and downloads a directory of frameworks in isolation. Presumably, the download path
-can point to anything. Right now it points to the project's `Carthage/Build` folder
-but later on will be configurable to point to any folder. Right now, it works very
-well with `Carthage` and should be used as such.
+`Punic` is capable of copying the downloaded/cached frameworks into a 
+separate folder, you don't have to necessarily use `Carthage/Build` if you
+want to copy the files into a separate directory for your own reasons.
+
 
 ## Developer Support
 

@@ -68,6 +68,7 @@ pub fn parse_pun_file(matches: ArgMatches) -> punfile::data::PunFile {
 
     println!("Cache Prefix\t\t: {}", punfile.configuration.prefix);
     println!("Cache Local Path\t: {}", punfile.configuration.local);
+    println!("Cache Output Path\t: {}", punfile.configuration.output);
     println!("S3 Bucket\t\t: {}", punfile.configuration.s3_bucket);
 
     let repository_map = contents_yaml

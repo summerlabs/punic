@@ -1,7 +1,7 @@
 use std::fs;
 
 pub fn scan_xcframeworks(output: String) -> Vec<String> {
-    println!("Scanning frameworks in Carthage build folder...");
+    println!("Scanning for .xcframeworks in {}...", output);
     let mut frameworks = vec![];
     for entry in fs::read_dir(output).unwrap() {
         let en = entry.unwrap();
@@ -15,7 +15,6 @@ pub fn scan_xcframeworks(output: String) -> Vec<String> {
                 .last()
                 .unwrap()
                 .to_string();
-            println!("{}", path_string);
             frameworks.push(path_string);
         }
     }

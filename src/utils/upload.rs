@@ -13,10 +13,10 @@ pub async fn upload_dependencies<'a>(
     matches: &&ArgMatches<'a>,
     expanded_str: Cow<'a, str>,
 ) {
-    let force_command = matches.value_of("ForceCommand").unwrap_or("false");
+    let ignore_local_cache = matches.is_present(crate::IGNORE_LOCAL_CACHE);
     let mut children = vec![];
     let requested_frameworks: Vec<&str> = matches
-        .values_of("dependencies")
+        .values_of(crate::OVERRIDE_DEPENDENCIES_COMMAND)
         .unwrap_or(Values::default())
         .collect();
     let mut frameworks = scan_xcframeworks(punfile.configuration.output.clone());
@@ -41,15 +41,8 @@ pub async fn upload_dependencies<'a>(
         let src_dir = format!("{}/{}", output, frame);
         let dest_dir = { format!("{}/build/{}/{}.zip", expanded_str, cache_prefix, frame) };
         let prefix = cache_prefix.clone();
-        if Path::new(&dest_dir).exists() && !force_command.eq("true") {
-            println!("Already zipped {}", frame);
-            let dest = dest_dir;
-            let pref = prefix.to_string();
-            let task = tokio::spawn(async move {
-                cache::s3::upload(dest, pref, bucket_name).await.ok();
-            });
-            children.push(task);
-        } else {
+        // If the cache does not exist or we're ignoring the cache -> zip the files
+        if ignore_local_cache || !Path::new(&dest_dir).exists() {
             let dest = dest_dir.clone();
             let task = tokio::spawn(async move {
                 let file = File::create(dest).unwrap();
@@ -65,6 +58,14 @@ pub async fn upload_dependencies<'a>(
                 cache::s3::upload(dest_dir, prefix.to_string(), bucket_name)
                     .await
                     .ok();
+            });
+            children.push(task);
+        } else {
+            println!("Already zipped {}", frame);
+            let dest = dest_dir;
+            let pref = prefix.to_string();
+            let task = tokio::spawn(async move {
+                cache::s3::upload(dest, pref, bucket_name).await.ok();
             });
             children.push(task);
         }
