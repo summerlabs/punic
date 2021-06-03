@@ -1,13 +1,9 @@
-
-
-
-use zip::write::{FileOptions};
-use walkdir::{DirEntry};
-use std::io::{Seek, Write,Read};
-use std::fs::File;
-use std::path::Path;
 use std::fs;
-
+use std::fs::File;
+use std::io::{Read, Seek, Write};
+use std::path::Path;
+use walkdir::DirEntry;
+use zip::write::FileOptions;
 
 pub fn zip_dir<T>(
     it: &mut dyn Iterator<Item = DirEntry>,
@@ -35,7 +31,6 @@ where
         // Write file or directory explicitly
         // Some unzip tools unzip files with directory paths correctly, some do not!
         if path.is_file() {
-            // println!("adding file {:?} as {:?}", path, name);
             #[allow(deprecated)]
             zip.start_file_from_path(name, options)?;
             let mut f = File::open(path)?;
@@ -45,7 +40,6 @@ where
         } else if name.as_os_str().len() != 0 {
             // Only if not root! Avoids path spec / warning
             // and mapname conversion failed error on unzip
-            // println!("adding dir {:?} as {:?}", path, name);
             #[allow(deprecated)]
             zip.add_directory_from_path(name, options)?;
         }
@@ -57,9 +51,7 @@ where
     Result::Ok(())
 }
 
-
-pub fn extract_zip(root: &str, path: &str,dest: &str){
-
+pub fn extract_zip(root: &str, path: &str, dest: &str) {
     let file = fs::File::open(path).unwrap();
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
@@ -71,33 +63,17 @@ pub fn extract_zip(root: &str, path: &str,dest: &str){
             Some(path) => path.to_owned(),
             None => continue,
         };
-
-        {
-            let comment = file.comment();
-            if !comment.is_empty() {
-                // println!("File {} comment: {}", i, comment);
-            }
-        }
-        
-
         if (&*file.name()).ends_with('/') {
-            // println!("File {} extracted to \"{}\"", i, outpath.display());
-            let output = format!("{}/{}/{}",root,dest,outpath.display());
+            let output = format!("{}/{}/{}", root, dest, outpath.display());
             fs::create_dir_all(output).unwrap();
         } else {
-            // println!(
-            //     "File {} extracted to \"{}\" ({} bytes)",
-            //     i,
-            //     outpath.display(),
-            //     file.size()
-            // );
             if let Some(p) = outpath.parent() {
                 if !p.exists() {
-                    let output = format!("{}/{}/{}",root,dest,p.display());
+                    let output = format!("{}/{}/{}", root, dest, p.display());
                     fs::create_dir_all(output).unwrap();
                 }
             }
-            let output = format!("{}/{}/{}",root,dest,outpath.display());
+            let output = format!("{}/{}/{}", root, dest, outpath.display());
             let mut outfile = fs::File::create(&output).unwrap();
             std::io::copy(&mut file, &mut outfile).unwrap();
         }
@@ -106,12 +82,11 @@ pub fn extract_zip(root: &str, path: &str,dest: &str){
         {
             use std::os::unix::fs::PermissionsExt;
             if let Some(mode) = file.unix_mode() {
-                let output = format!("{}/{}/{}",root,dest,outpath.display());
+                let output = format!("{}/{}/{}", root, dest, outpath.display());
                 fs::set_permissions(output, fs::Permissions::from_mode(mode)).unwrap();
             }
         }
     }
 
-    println!("Unzipped {}", path);
+    println!("Unzipped to {}/{}", root, dest);
 }
-

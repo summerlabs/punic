@@ -12,6 +12,9 @@ that exclusively supports Apple's `.xcframeworks`.
 
 Please give us a ⭐️ if you find this CLI useful!
 
+### Example Usage
+
+![elephant](assets/demo.gif)
 
 # Installation
 
@@ -58,12 +61,15 @@ as well as configuring the path of your local cache.
 # Configure Punic
 configuration:
   # save dependencies into this AWS bucket directory
+  #
   # ie. //some-remote-bucket/1.0.1/Alamofire/Alamofire.xcframework
-  # 
+  #
+  # defaults to `output`
+  #
   prefix: 1.0.1
   # local cache location
   local: ~/Library/Caches/Punic
-  # output location
+  # output cache location
   output: Carthage/Build
   # aws bucket location
   s3Bucket: some-remote-bucket
@@ -99,11 +105,19 @@ punic upload
 
 **Miscellaneous**
 ```bash
-# force an upload/download and ignore the local cache
-punic {command} -f true 
+# The `output cache` is the Carthage/Build folder
+
+# ignore the local cache and zip directly from the output cache 
+punic upload -l
+
+# ignore the local cache and download anyway then copy
+punic download -l
+
+# ignore the output cache and copy anyway
+punic download -o
 
 # use an override cache prefix
-punic --cache-prefix some_other_path {command} 
+punic {comand} --cache-prefix some_other_path
 ```
 
 ## Carthage-less Support
