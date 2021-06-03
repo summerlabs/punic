@@ -108,13 +108,13 @@ punic upload
 # The `output cache` is the Carthage/Build folder
 
 # ignore the local cache and zip directly from the output cache 
-punic upload -l
+punic upload --ignore-local
 
 # ignore the local cache and download anyway then copy
-punic download -l
+punic download --ignore-local
 
 # ignore the output cache and copy anyway
-punic download -o
+punic download --ignore-output
 
 # use an override cache prefix
 punic {comand} --cache-prefix some_other_path
