@@ -3,7 +3,7 @@
 ![elephant](assets/elephant_2.png) 
 
 **Punic** is a remote caching CLI built for [Carthage](https://github.com/Carthage/Carthage)
-that exclusively supports Apple's `.xcframeworks`.
+that exclusively supports [Apple's](https://developer.apple.com/documentation/swift_packages/distributing_binary_frameworks_as_swift_packages) `.xcframeworks`.
 
 **Features**
 - ✅ Easy remote caching via [AWS S3](https://aws.amazon.com/s3/)
@@ -51,7 +51,7 @@ aws_secret_access_key = {SOME_SECRET_KEY}
 
 ### Punfile
 
-**Punic** looks for a `Punfile` to determine which dependencies to download 
+**Punic** looks for a `Punfile` in your top-level project to determine which dependencies to download 
 as well as configuring the path of your local cache.
 
 
@@ -117,15 +117,16 @@ punic download --ignore-local
 punic download --ignore-output
 
 # use an override cache prefix
-punic {comand} --cache-prefix some_other_path
+punic {command} --cache-prefix {some_other_path_key}
 ```
 
 ## Carthage-less Support
 
-`Punic` is capable of copying the downloaded/cached frameworks into a 
+**Punic** is capable of copying the downloaded/cached frameworks into a 
 separate folder, you don't have to necessarily use `Carthage/Build` if you
 want to copy the files into a separate directory for your own reasons.
 
+Feel free to change the `output` key in the `Punfile` to achieve this.
 
 ## Developer Support
 
