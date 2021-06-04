@@ -3,4 +3,6 @@ build:
 	cp -f target/debug/punic /usr/local/bin/punic
 
 release: build
-	cd target/release && tar -cvf punic.tar.gz punic
+	cd target/release \
+		&& tar -cvf punic.tar.gz punic \
+		&& shasum -a 256 punic.tar.gz
