@@ -13,7 +13,10 @@ pub async fn download_from_s3(
     let f_name = { filename.clone() };
     let path_str = f_name.split("/").last().unwrap_or("");
     let object_key = format!("{}/{}", prefix, path_str).to_string();
-    println!("Downloading {}/{}...", bucket, object_key);
+    let _bucket = bucket.clone();
+    let _object_key = object_key.clone();
+
+    println!("Downloading {}/{}...", bucket.clone(), object_key);
 
     let request = GetObjectRequest {
         bucket,
@@ -23,10 +26,18 @@ pub async fn download_from_s3(
 
     let stream = s3_client.get_object(request).await;
 
-    let stream = stream?.body.take().expect("no body");
+    let mut output = match stream {
+        Ok(output) => output,
+        Err(error) => panic!(error.to_string()),
+    };
+
+    let stream = output.body.take().expect("No Content");
+
     let mut body = stream.into_async_read();
     let mut file = tokio::fs::File::create(filename).await.unwrap();
     tokio::io::copy(&mut body, &mut file).await.ok();
+
+    println!("Downloaded {}/{}", _bucket, _object_key);
 
     Ok(())
 }
