@@ -23,7 +23,7 @@ const CACHE_PREFIX: &str = "CACHE_PREFIX";
 #[tokio::main]
 async fn main() {
     let matches = App::new("Punic Carthage")
-        .version("0.0.8")
+        .version("1.0.0")
         .about("ios dependency caching made great again")
         .author("Johnson Cheung")
         .subcommand(
