@@ -2,6 +2,7 @@ use crate::punfile;
 use crate::punfile::data::{Configuration, PunFile, Repository};
 use clap::ArgMatches;
 use serde_yaml::Value;
+use std::borrow::Borrow;
 
 pub mod data {
 
@@ -23,23 +24,14 @@ pub mod data {
     }
 }
 
-pub fn parse_pun_file(matches: ArgMatches) -> punfile::data::PunFile {
+pub fn parse_pun_file(matches: &ArgMatches) -> punfile::data::PunFile {
     let contents = std::fs::read_to_string("Punfile")
         .expect("Unable to read Punfile, make sure one exists in your project.");
     let contents_yaml: serde_yaml::Value = serde_yaml::from_str(contents.as_str()).unwrap();
     let configuration = contents_yaml
         .get("configuration")
         .expect("Unable to read key `configuration` in Punfile.");
-    let default_prefix = &Value::String("output".into());
-    let _prefix = configuration
-        .get("prefix")
-        .unwrap_or(default_prefix)
-        .as_str()
-        .unwrap_or("output");
-    let prefix = matches
-        .value_of("CachePrefix")
-        .unwrap_or(_prefix)
-        .to_string();
+    let prefix = get_cache_prefix(matches.borrow(), configuration);
     let local = configuration
         .get("local")
         .expect("Unable to read key `local` in Punfile.")
@@ -95,4 +87,26 @@ pub fn parse_pun_file(matches: ArgMatches) -> punfile::data::PunFile {
         }
     }
     return punfile;
+}
+
+fn get_cache_prefix(matches: &ArgMatches, configuration: &Value) -> String {
+    let default_prefix = &Value::String("output".into());
+    let punfile_prefix = configuration
+        .get("prefix")
+        .unwrap_or(default_prefix)
+        .as_str()
+        .unwrap_or("output");
+    if let Some(ref matches) = matches.subcommand_matches("download") {
+        matches
+            .value_of(crate::CACHE_PREFIX)
+            .unwrap_or(punfile_prefix)
+            .to_string()
+    } else if let Some(ref matches) = matches.subcommand_matches("upload") {
+        matches
+            .value_of(crate::CACHE_PREFIX)
+            .unwrap_or(punfile_prefix)
+            .to_string()
+    } else {
+        punfile_prefix.to_string()
+    }
 }

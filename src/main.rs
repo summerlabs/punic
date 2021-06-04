@@ -9,6 +9,7 @@ use crate::punfile::parse_pun_file;
 use crate::utils::download::download_dependencies;
 use crate::utils::upload::upload_dependencies;
 use clap::{App, Arg};
+use std::borrow::Borrow;
 
 mod cache;
 mod punfile;
@@ -17,6 +18,7 @@ mod utils;
 const OVERRIDE_DEPENDENCIES_COMMAND: &str = "OVERRIDE_DEPENDENCIES";
 const IGNORE_LOCAL_CACHE: &str = "IGNORE_LOCAL_CACHE";
 const IGNORE_OUTPUT_CACHE: &str = "IGNORE_OUTPUT_CACHE";
+const CACHE_PREFIX: &str = "CACHE_PREFIX";
 
 #[tokio::main]
 async fn main() {
@@ -31,15 +33,13 @@ async fn main() {
                     Arg::with_name(crate::IGNORE_LOCAL_CACHE)
                         .short("l")
                         .long("ignore-local")
-                        .value_name("Ignore Local")
-                        .help("ignore the local cache and download anyway")
+                        .help("ignore the local cache and download anyway then copy")
                         .takes_value(false),
                 )
                 .arg(
                     Arg::with_name(crate::IGNORE_OUTPUT_CACHE)
                         .short("o")
                         .long("ignore-output")
-                        .value_name("Ignore Output")
                         .help("ignore the output cache and copy anyway")
                         .takes_value(false),
                 )
@@ -53,10 +53,10 @@ async fn main() {
                         .value_terminator(";"),
                 )
                 .arg(
-                    Arg::with_name("CachePrefix")
+                    Arg::with_name(crate::CACHE_PREFIX)
                         .short("p")
                         .long("cache-prefix")
-                        .value_name("Cache Prefix")
+                        .value_name(crate::CACHE_PREFIX)
                         .help("set custom prefix for directory")
                         .takes_value(true),
                 ),
@@ -68,7 +68,6 @@ async fn main() {
                     Arg::with_name(crate::IGNORE_LOCAL_CACHE)
                         .short("l")
                         .long("ignore-local")
-                        .value_name("Ignore Local")
                         .help("ignore the local cache and zip anyway")
                         .takes_value(false),
                 )
@@ -81,17 +80,17 @@ async fn main() {
                         .value_delimiter(";"),
                 )
                 .arg(
-                    Arg::with_name("CachePrefix")
+                    Arg::with_name(crate::CACHE_PREFIX)
                         .short("p")
                         .long("cache-prefix")
-                        .value_name("Cache Prefix")
+                        .value_name(crate::CACHE_PREFIX)
                         .help("set custom prefix for directory")
                         .takes_value(true),
                 ),
         )
         .get_matches();
 
-    let punfile = parse_pun_file(matches.clone());
+    let punfile = parse_pun_file(matches.borrow());
     let local_cache = punfile.configuration.local.clone();
 
     let cache_dir = shellexpand::tilde(local_cache.as_str());
