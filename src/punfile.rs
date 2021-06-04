@@ -2,7 +2,6 @@ use crate::punfile;
 use crate::punfile::data::{Configuration, PunFile, Repository};
 use clap::ArgMatches;
 use serde_yaml::Value;
-use std::borrow::Borrow;
 
 pub mod data {
 
@@ -31,7 +30,7 @@ pub fn parse_pun_file(matches: &ArgMatches) -> punfile::data::PunFile {
     let configuration = contents_yaml
         .get("configuration")
         .expect("Unable to read key `configuration` in Punfile.");
-    let prefix = get_cache_prefix(matches.borrow(), configuration);
+    let prefix = get_cache_prefix(matches, configuration);
     let local = configuration
         .get("local")
         .expect("Unable to read key `local` in Punfile.")
