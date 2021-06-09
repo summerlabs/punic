@@ -118,7 +118,7 @@ pub fn print_pun_deps(punfile: &PunFile) {
     let frameworks = &punfile.frameworks;
 
     for framework in frameworks {
-        println!("group: {} , artifact: {}, version: {}", 
+        println!("group: {}, artifact: {}, version: {}", 
             framework.repo_name, 
             framework.name, 
             framework.version);

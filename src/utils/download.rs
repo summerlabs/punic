@@ -62,10 +62,9 @@ pub async fn download_dependencies<'a>(
                 println!("Ignoring {}", xcf_cache_dir);
             }
             let s3_bucket = punfile.configuration.s3_bucket.clone();
-            let empty = String::from("");
-            let prefix = match dependencies.version {
-                empty => format!("{}/{}", version.clone(), cache_prefix.clone()),
-                _ => cache_prefix.clone(),
+            let prefix = match dependencies.version.as_str() {
+                "" => cache_prefix.clone(),
+                _ => format!("{}/{}",cache_prefix.clone(), version.clone())
             };
 
             let task = tokio::spawn(async move {

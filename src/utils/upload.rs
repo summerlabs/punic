@@ -60,10 +60,10 @@ pub async fn upload_dependencies<'a>(
         let dest_dir = { format!("{}/build/{}/{}.zip", expanded_str, cache_prefix, frame) };
         let prefix = cache_prefix.clone();
         let version = framework.version.clone();
-        
-        let prefix = match &framework.version {
-                empty => format!("{}/{}",cache_prefix.clone(),version),
-                _ => cache_prefix.clone(),
+        let _empty_string = String::from("");
+        let prefix = match framework.version.as_str() {
+                "" => cache_prefix.clone(),
+                _ => format!("{}/{}",cache_prefix.clone(),version)
         };
         // If the cache does not exist or we're ignoring the cache -> zip the files
         if ignore_local_cache || !Path::new(&dest_dir).exists() {
