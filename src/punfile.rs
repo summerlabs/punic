@@ -20,6 +20,7 @@ pub mod data {
     pub struct Repository {
         pub repo_name: String,
         pub name: String,
+        pub version: String
     }
 }
 
@@ -77,9 +78,11 @@ pub fn parse_pun_file(matches: &ArgMatches) -> punfile::data::PunFile {
                     .as_mapping()
                     .unwrap()
                     .get(&serde_yaml::Value::from("name"));
+                let version = seq.as_mapping().unwrap().get(&serde_yaml::Value::from("version"));
                 let repository = Repository {
                     repo_name: String::from(repo_name),
                     name: String::from(map_name.unwrap().as_str().unwrap()),
+                    version: String::from(version.unwrap_or(&serde_yaml::Value::String("".into())).as_str().unwrap())
                 };
                 punfile.frameworks.push(repository);
             }
@@ -109,3 +112,17 @@ fn get_cache_prefix(matches: &ArgMatches, configuration: &Value) -> String {
         punfile_prefix.to_string()
     }
 }
+
+
+pub fn print_pun_deps(punfile: &PunFile) {
+    let frameworks = &punfile.frameworks;
+
+    for framework in frameworks {
+        println!("group: {} , artifact: {}, version: {}", 
+            framework.repo_name, 
+            framework.name, 
+            framework.version);
+    }
+
+}
+

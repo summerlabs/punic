@@ -6,3 +6,4 @@ configuration:
 dependencies:
 - Alamofire:
   - name: Alamofire
+    version: 1.0.0

@@ -19,6 +19,7 @@ pub async fn download_dependencies<'a>(
         .map(|it| Repository {
             repo_name: String::from(it),
             name: String::from(it),
+            version: String::from(it)
         })
         .collect();
     let mut frameworks = punfile.frameworks;
@@ -35,6 +36,7 @@ pub async fn download_dependencies<'a>(
                 filtered_frameworks.push(Repository {
                     repo_name: frame.repo_name.to_string(),
                     name: frame.name.to_string(),
+                    version: frame.version.to_string()
                 });
             }
         }
@@ -45,6 +47,7 @@ pub async fn download_dependencies<'a>(
         let output = punfile.configuration.output.clone();
         let cache_prefix = punfile.configuration.prefix.clone();
         let framework_name = format!("{}.xcframework", dependencies.name);
+        let version = dependencies.version.clone();
         let xcf_cache_dir = format!(
             "{}/build/{}/{}.xcframework.zip",
             cache_dir, cache_prefix, dependencies.name
@@ -59,7 +62,12 @@ pub async fn download_dependencies<'a>(
                 println!("Ignoring {}", xcf_cache_dir);
             }
             let s3_bucket = punfile.configuration.s3_bucket.clone();
-            let prefix = cache_prefix.clone();
+            let empty = String::from("");
+            let prefix = match dependencies.version {
+                empty => format!("{}/{}", version.clone(), cache_prefix.clone()),
+                _ => cache_prefix.clone(),
+            };
+
             let task = tokio::spawn(async move {
                 cache::s3::download_from_s3(
                     xcf_cache_dir.to_string(),
