@@ -20,6 +20,7 @@ pub mod data {
     pub struct Repository {
         pub repo_name: String,
         pub name: String,
+        pub version: String
     }
 }
 
@@ -60,7 +61,7 @@ pub fn parse_pun_file(matches: &ArgMatches) -> punfile::data::PunFile {
     println!("Cache Prefix\t\t: {}", punfile.configuration.prefix);
     println!("Cache Local Path\t: {}", punfile.configuration.local);
     println!("Cache Output Path\t: {}", punfile.configuration.output);
-    println!("S3 Bucket\t\t: {}", punfile.configuration.s3_bucket);
+    println!("S3 Bucket\t\t: {} \n", punfile.configuration.s3_bucket);
 
     let repository_map = contents_yaml
         .get("dependencies")
@@ -77,9 +78,11 @@ pub fn parse_pun_file(matches: &ArgMatches) -> punfile::data::PunFile {
                     .as_mapping()
                     .unwrap()
                     .get(&serde_yaml::Value::from("name"));
+                let version = seq.as_mapping().unwrap().get(&serde_yaml::Value::from("version"));
                 let repository = Repository {
                     repo_name: String::from(repo_name),
                     name: String::from(map_name.unwrap().as_str().unwrap()),
+                    version: String::from(version.unwrap_or(&serde_yaml::Value::String("".into())).as_str().unwrap())
                 };
                 punfile.frameworks.push(repository);
             }
@@ -109,3 +112,20 @@ fn get_cache_prefix(matches: &ArgMatches, configuration: &Value) -> String {
         punfile_prefix.to_string()
     }
 }
+
+
+pub fn print_pun_deps(punfile: &PunFile) {
+    let frameworks = &punfile.frameworks;
+    println!("Listing dependencies in Punfile");
+    
+    frameworks.iter().enumerate().for_each(|(i, framework)|{
+        println!("{}. Group: {}, Artifact: {}, Version: {}", 
+            i + 1,
+            framework.repo_name, 
+            framework.name, 
+            framework.version);
+
+    });
+
+}
+

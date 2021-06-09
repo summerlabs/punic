@@ -6,6 +6,7 @@ extern crate shellexpand;
 extern crate tokio;
 
 use crate::punfile::parse_pun_file;
+use crate::punfile::print_pun_deps;
 use crate::utils::download::download_dependencies;
 use crate::utils::upload::upload_dependencies;
 use clap::{App, Arg};
@@ -27,6 +28,7 @@ async fn main() {
         .about("ios dependency caching made great again")
         .author("Johnson Cheung")
         .subcommand(
+                
             App::new("download")
                 .about("scan your punfile and download dependencies")
                 .arg(
@@ -88,7 +90,10 @@ async fn main() {
                         .takes_value(true),
                 ),
         )
-        .get_matches();
+        .subcommand(
+            App::new("list")
+                .about("list parsed out dependencies from punfile"),
+        ).get_matches();
 
     let punfile = parse_pun_file(matches.borrow());
     let local_cache = punfile.configuration.local.clone();
@@ -105,5 +110,8 @@ async fn main() {
         download_dependencies(punfile, matches, cache_dir).await;
     } else if let Some(ref matches) = matches.subcommand_matches("upload") {
         upload_dependencies(punfile, matches, cache_dir).await;
+    } else if let Some(ref matches) = matches.subcommand_matches("list"){
+        print_pun_deps(&punfile);
     }
+
 }

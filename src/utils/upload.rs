@@ -7,6 +7,10 @@ use std::borrow::Cow;
 use std::fs::File;
 use std::path::Path;
 use walkdir::WalkDir;
+use crate::punfile::data::Repository;
+use std::collections::HashMap;
+        
+
 
 pub async fn upload_dependencies<'a>(
     punfile: PunFile,
@@ -20,6 +24,7 @@ pub async fn upload_dependencies<'a>(
         .unwrap_or(Values::default())
         .collect();
     let mut frameworks = scan_xcframeworks(punfile.configuration.output.clone());
+
     if !requested_frameworks.is_empty() {
         let mut filtered_frameworks: Vec<String> = Vec::new();
         for dep in &requested_frameworks {
@@ -37,10 +42,34 @@ pub async fn upload_dependencies<'a>(
         let output = punfile.configuration.output.clone();
         let cache_prefix = punfile.configuration.prefix.clone();
         let bucket_name = punfile.configuration.s3_bucket.clone();
-        println!("Found {}/{}", &output, frame);
+        let default_repo = Repository {
+            name: "".to_string(),
+            repo_name: "".to_string(),
+            version: "".to_string()
+        };
+
+        let expanded_frameworks: Vec<&str> = frame.split(".").collect();
+
+
+        let framework_key = expanded_frameworks.get(0).unwrap();
+
+        let framework = punfile.frameworks.iter().find(|item| item.name.contains(framework_key)).unwrap_or(&default_repo);
+
+        if framework.version.is_empty() {
+            println!("Found {}/{}", &output, frame);
+        } else {
+            println!("Found {}/{} @version {}", &output, frame, framework.version);
+        }
+
         let src_dir = format!("{}/{}", output, frame);
         let dest_dir = { format!("{}/build/{}/{}.zip", expanded_str, cache_prefix, frame) };
         let prefix = cache_prefix.clone();
+        let version = framework.version.clone();
+        let _empty_string = String::from("");
+        let prefix = match framework.version.as_str() {
+                "" => cache_prefix.clone(),
+                _ => format!("{}/{}",cache_prefix.clone(),version)
+        };
         // If the cache does not exist or we're ignoring the cache -> zip the files
         if ignore_local_cache || !Path::new(&dest_dir).exists() {
             let dest = dest_dir.clone();

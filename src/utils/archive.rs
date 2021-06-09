@@ -52,10 +52,11 @@ where
 }
 
 pub fn extract_zip(root: &str, path: &str, dest: &str) {
+    
+    println!("Unzipping {}...", path);
     let file = fs::File::open(path).unwrap();
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
-    println!("Unzipping {}...", path);
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
