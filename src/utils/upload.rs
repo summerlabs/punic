@@ -54,8 +54,13 @@ pub async fn upload_dependencies<'a>(
         let framework_key = expanded_frameworks.get(0).unwrap();
 
         let framework = punfile.frameworks.iter().find(|item| item.name.contains(framework_key)).unwrap_or(&default_repo);
-        println!("discovered framework version {}", framework.name);
-        println!("Found {}/{}", &output, frame);
+
+        if framework.version.is_empty() {
+            println!("Found {}/{}", &output, frame);
+        } else {
+            println!("Found {}/{} @version {}", &output, frame, framework.version);
+        }
+
         let src_dir = format!("{}/{}", output, frame);
         let dest_dir = { format!("{}/build/{}/{}.zip", expanded_str, cache_prefix, frame) };
         let prefix = cache_prefix.clone();

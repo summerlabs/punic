@@ -61,7 +61,7 @@ pub fn parse_pun_file(matches: &ArgMatches) -> punfile::data::PunFile {
     println!("Cache Prefix\t\t: {}", punfile.configuration.prefix);
     println!("Cache Local Path\t: {}", punfile.configuration.local);
     println!("Cache Output Path\t: {}", punfile.configuration.output);
-    println!("S3 Bucket\t\t: {}", punfile.configuration.s3_bucket);
+    println!("S3 Bucket\t\t: {} \n", punfile.configuration.s3_bucket);
 
     let repository_map = contents_yaml
         .get("dependencies")
@@ -116,13 +116,16 @@ fn get_cache_prefix(matches: &ArgMatches, configuration: &Value) -> String {
 
 pub fn print_pun_deps(punfile: &PunFile) {
     let frameworks = &punfile.frameworks;
-
-    for framework in frameworks {
-        println!("Group: {}, Artifact: {}, Version: {}", 
+    println!("Listing dependencies in Punfile");
+    
+    frameworks.iter().enumerate().for_each(|(i, framework)|{
+        println!("{}. Group: {}, Artifact: {}, Version: {}", 
+            i + 1,
             framework.repo_name, 
             framework.name, 
             framework.version);
-    }
+
+    });
 
 }
 
