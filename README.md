@@ -79,11 +79,11 @@ dependencies:
 # single framework definition
 - AlamoFire:
   - name: AlamoFire
-  # support for explict versioning
+  # support for explicit versioning
   - version: 0.1.9
 # multiple frameworks definition sometimes created by one library
 - CocoaLumberjack:  
-  # having no version defaults to versionless dependency cache
+  # having no version defaults to a versionless dependency cache
   - name: CocoaLumberjack
   - name: CocoaLumberjackSwift
   - name: CocoaAsyncSocket
