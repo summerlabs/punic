@@ -121,6 +121,9 @@ punic download --ignore-output
 
 # use an override cache prefix
 punic {command} --cache-prefix {some_other_path_key}
+
+# target specific dependencies
+punic {command} --dependencies Alamofre,CocoaLumberjack
 ```
 
 ## Carthage-less Support
