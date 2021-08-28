@@ -80,14 +80,17 @@ dependencies:
 - AlamoFire:
   - name: AlamoFire
   # support for explicit versioning
-  - version: 0.1.9
+    version: 0.1.9
 # multiple frameworks definition sometimes created by one library
 - CocoaLumberjack:  
   # having no version defaults to a versionless dependency cache
   - name: CocoaLumberjack
   - name: CocoaLumberjackSwift
   - name: CocoaAsyncSocket
+    version: {COCOA_VERSION}
 ```
+we also support basic templating with environment variables the best way to do this is create
+a .env file and source it before running punfile
 
 ## Commands
 

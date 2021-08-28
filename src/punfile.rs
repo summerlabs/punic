@@ -2,6 +2,11 @@ use crate::punfile;
 use crate::punfile::data::{Configuration, PunFile, Repository};
 use clap::ArgMatches;
 use serde_yaml::Value;
+use regex::Regex;
+use std::env;
+use std::collections::HashMap;
+use tinytemplate::TinyTemplate;
+
 
 pub mod data {
 
@@ -24,10 +29,34 @@ pub mod data {
     }
 }
 
+
+pub fn build_template(content: &str) -> String {
+    
+
+    let mut data = HashMap::new();
+
+    for cap in Regex::new(r"\{(.*?)}").unwrap().captures_iter(content) {
+        println!("{:#?}", cap.get(1).unwrap().as_str());
+        let key = cap.get(1).unwrap().as_str();
+        let value = env::var(key).unwrap_or(String::from(""));
+        data.insert(key.to_string(),value.to_string());
+    }
+    
+    let mut tt = TinyTemplate::new();
+    tt.add_template("hello", content);    
+    let rendered = tt.render("hello", &data).unwrap();
+    return String::from(rendered);
+}
+
+
 pub fn parse_pun_file(matches: &ArgMatches) -> punfile::data::PunFile {
     let contents = std::fs::read_to_string("Punfile")
         .expect("Unable to read Punfile, make sure one exists in your project.");
-    let contents_yaml: serde_yaml::Value = serde_yaml::from_str(contents.as_str()).unwrap();
+    
+    let rendered = build_template(&contents);
+
+
+    let contents_yaml: serde_yaml::Value = serde_yaml::from_str(rendered.as_str()).unwrap();
     let configuration = contents_yaml
         .get("configuration")
         .expect("Unable to read key `configuration` in Punfile.");
